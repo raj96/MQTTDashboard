@@ -1,0 +1,33 @@
+{
+  "name": "developer_weekend",
+  "version": "1.0.0",
+  "description": "Demo app to view MQTT data",
+  "main": "server.js",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "ejs": "^2.5.7",
+    "express-session": "^1.15.6",
+    "express": "^4.16.2",
+    "fs": "^0.0.1-security"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node server",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/raj96/MQTTDemo.git"
+  },
+  "keywords": [
+    "mqtt",
+    "CAN",
+    "continuous-mqtt"
+  ],
+  "author": "Raja Nand Sharma <rajpeaks@gmail.com>",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/raj96/MQTTDemo/issues"
+  },
+  "homepage": "https://github.com/raj96/MQTTDemo#readme"
+}

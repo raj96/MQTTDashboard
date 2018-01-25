@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Dashboard Login</title>
+		<meta charset="utf-8" />
+        <link rel="stylesheet" href="public/css/bootstrap.css" />
+	</head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-3"></div>
+                <div class="col-sm-6">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h3>Login</h3>
+                        </div>
+                        <form role="form" class="form panel-body">
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input class="form-control" id="username" required="required" />
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input class="form-control" id="password" type="password" required="required" />
+                            </div>
+                            
+                            <center>
+                                <button id="login" class="btn btn-success" type="submit">Log In</button>
+                            </center>
+                            
+                        </form>
+                    </div>
+                </div>
+                <div class="col-sm-3"></div>
+            </div>
+        </div>
+        <script>
+            function _(z) {
+                return document.getElementById(z);
+            }
+            
+            function login() {
+                var username = _('username').value;
+                var password = _('password').value;
+                
+                var data = 'username='+username+'&password='+password;
+                
+                var ajax = new XMLHttpRequest();
+                
+                ajax.open('POST','/login',true);
+                ajax.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+                
+                ajax.onreadystatechange = function() {
+                    if(this.readyState==4 && this.status==200) {
+                        var res = this.responseText;
+                        if(res=='err')
+                            window.alert('Wrong Credentials');
+                        else
+                            document.write(res);
+                    }
+                }
+                
+                ajax.send(data);
+                
+            }
+            
+            function attachEventHandlers() {
+                _('login').onclick = login;
+            }
+            
+            window.onload = function() {
+                
+                attachEventHandlers();
+                
+            }
+            
+        </script>
+    </body>
+</html>

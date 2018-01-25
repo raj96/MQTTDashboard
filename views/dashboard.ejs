@@ -1,0 +1,201 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf8" />
+	<title>Dashboard:<%=user %></title>
+    <link rel="stylesheet" href="public/css/bootstrap.css" />
+</head>
+
+<style>
+    body {
+        background-image: url('public/img/bg.png');
+        background-repeat: repeat;
+    }
+    div {
+        color:snow;
+    }
+    #main-form {
+        height:75vh;
+        margin-top: 15vh;
+    }
+    
+    .panel * {
+        border-radius: 0px;
+    }
+    
+    .data-fields {
+        padding-top:1vmax;
+        margin-top:1vmax;
+        box-shadow:0px 5px 8px 2px #0080C0; 
+    }
+    
+    .value {
+        font-size:2em;
+    }
+    
+    .value-wrapper {
+        margin-bottom:0.5em;
+    }
+    
+    .field {
+        font-size:1.5em;
+    }
+    
+</style>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <center><h4 id="heading">Form Selection Page</h4></center>
+                </div>
+            </div>
+            <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-sm-2"></div>
+                            <div id="data-form" class="col-sm-8">
+                                <%- include partial_form_select.ejs %>
+                            </div>
+                            <div class="col-sm-2"></div>
+                        </div>
+                    </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="public/js/paho-mqtt.js"></script>
+    <script>
+        var client = new Paho.MQTT.Client('blackspektro.com',8080,"clientID_"+Math.random());
+        client.onMessageArrived = onMessage;
+        client.onConnectionLost = startListening;
+        
+        var topic;
+        var sensorConn = [];
+        
+        function onMessage(message) {
+            try {
+                var jobj = JSON.parse(message.payloadString);
+                var htmlString = '';
+                for(keys in jobj) {
+                    htmlString += '<div class="row data-fields"><div class="col-sm-4 col-lg-4 col-md-4 col-xs-4"><span class="field">'+keys+'</span></div><div class="col-sm-5 col-lg-5 col-md-5 col-xs-5"></div><div class="col-sm-3 col-md-3 col-lg-3 col-xs-3 value-wrapper"><span class="value">'+jobj[keys]+'</span></div></div>';
+                }
+                _('sensorData').innerHTML = htmlString;
+            }
+            catch(e) {
+                window.alert("Please Refresh.\nError occurred: "+e);
+                stopListening();
+            }
+        }
+        
+        function _(z) {
+            return document.getElementById(z);
+        }
+        
+        function stopListening() {
+            client.onMessageArrived = ()=>{};
+        }
+        
+        function loadPartialForm(pageName) {
+            var ajax = new XMLHttpRequest();
+            ajax.open('GET',pageName,true);
+            ajax.onreadystatechange = function() {
+                if(this.readyState==4 && this.status==200) {
+                    _('data-form').innerHTML = this.responseText;
+                    switch(pageName) {
+                        case '/partFormSelect':
+                            _('loadForm').onclick = loadSubPage;
+                            _('heading').innerHTML = 'Form Selection Page'
+                            break;
+                        case '/mqttContinuous':
+                            _('back').onclick = function() {
+                                stopListening();
+                                loadPartialForm('/partFormSelect');
+                            }
+                            _('heading').innerHTML = 'MQTT Receiver';
+                            startListening();
+                            break;
+                        case '/canEmu':
+                            _('back').onclick = function() {
+                                for(connection in sensorConn)
+                                    connection.onMessageArrived = ()=>{};
+                                sensorConn = [];
+                                loadPartialForm('/partFormSelect');
+                            }
+                            _('heading').innerHTML = 'CAN Emulation';
+                            _('fetchSensor').onclick = requestSensorData;
+                            break;
+                    }
+                }
+            }
+            
+            ajax.send();
+        }
+        
+        function requestSensorData() {
+            var sensorName = _('sensorName').value;
+            var client = new Paho.MQTT.Client('blackspektro.com',8080,"clientID_"+Math.random());
+            
+            var connect = function() {
+                var htmlString = '<div class="row"><div class="col-sm-4 col-xs-4 col-md-4 col-lg-4"><h3>'+sensorName+'</h3></div><div class="col-sm-5 col-xs-5 col-md-5 col-lg-5"></div><div class="col-sm-3 col-xs-3 col-md-3 col-lg-3"><h2><div id="'+sensorName+'"></div></h2></div></div>';
+                _('sensorData').innerHTML += htmlString;
+                client.subscribe(topic+'/'+sensorName);
+            };
+            
+            client.onMessageArrived = function(message) {
+                console.log(message);
+                _(sensorName).innerHTML = message.payloadString;
+            };
+            
+            client.onConnectionLost = connect;
+            
+            client.connect({
+                onSuccess:connect
+            });
+            
+            sensorConn.push(client);
+
+        }
+        
+        function startListening() {
+            client.connect({
+                onSuccess:startInit
+            });
+        }
+        
+        function startInit() {
+            client.subscribe(topic);
+        }
+        
+        function loadSubPage() {
+            var topicName = _('topic-name').value.trim();
+            var formType = _('form-type').value;
+            var pageName;
+            
+            topic = topicName;
+            
+            if(topicName.length==0)
+                window.alert('Topic Name cannot be empty !!!');
+            else {
+                switch(formType) {
+                    case 'MQTT Receiver':
+                        pageName = '/mqttContinuous';
+                        break;
+                    case 'CAN Emulation':
+                        pageName = '/canEmu';
+                        break;
+                    default:
+                        window.stop();
+                }
+                
+                loadPartialForm(pageName);
+            }
+        }
+        
+        window.onload = function() {
+            
+            _('loadForm').onclick = loadSubPage;
+            
+        }
+        
+    </script>
+</body>
+</html>
